@@ -1,7 +1,7 @@
 import kagglehub
 import pandas as pd
 import os
-
+from sklearn.model_selection import train_test_split
 TARGET_LABELS = [
     "Consolidation",
     "Effusion",
@@ -43,16 +43,25 @@ class DataPreprocessor:
         keep_columns = ['Image Index'] + TARGET_LABELS
         self.df = self.df[keep_columns]
     
-    def save(self):
+    def split_and_save(self):
+        train_df, val_df = train_test_split(
+            self.df, 
+            test_size=0.2, 
+            random_state=42,
+            shuffle=True
+        )
         os.makedirs(self.data_dir, exist_ok=True)
-        self.df.to_csv(self.output_path, index=False)
-        print(f"Файл успешно сохранен: {self.output_path}")
+
+        train_df.to_csv(os.path.join(self.data_dir, 'train.csv'), index=False)
+        val_df.to_csv(os.path.join(self.data_dir, 'val.csv'), index=False)
+        print(f"Готово. Обучающий датафрейм: {len(train_df)}, валидационный: {len(val_df)}")
+        
 
     def run(self):
         self.download_and_load()
         self.build_index()
         self.process_labels()
-        self.save()
+        self.split_and_save()
 
 if __name__ == '__main__':
     preprocessor = DataPreprocessor(target_labels=TARGET_LABELS)
