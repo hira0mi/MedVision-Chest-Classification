@@ -1,7 +1,8 @@
 import kagglehub
 import pandas as pd
 import os
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GroupShuffleSplit
+import torch
 TARGET_LABELS = [
     "Consolidation",
     "Effusion",
@@ -9,7 +10,7 @@ TARGET_LABELS = [
     "Atelectasis",
     "Infiltration"
 ]
-
+#TO-DO: исправить неравномернное распределение лейблов
 
 class DataPreprocessor:
     def __init__(self, target_labels):
@@ -17,45 +18,52 @@ class DataPreprocessor:
         self.image_path_dict = dict()
         self.current_dir = os.path.dirname(os.path.abspath(__file__))
         self.data_dir = os.path.join(self.current_dir, '..', 'data')
-        self.output_path = os.path.join(self.data_dir, 'labels_all.csv')
+        os.makedirs(self.data_dir, exist_ok=True)
     
     def download_and_load(self):
         try:
             print('Начинаю загрузку датасета...')
-            self.path = kagglehub.dataset_download('nih-chest-xrays/data')
-            self.csv_path = os.path.join(self.path, 'Data_Entry_2017.csv')
+            self.path = kagglehub.dataset_download('nih-chest-xrays/data')  
             self.df = pd.read_csv(self.csv_path)
         except Exception as e:
             print(f'Ошибка при загрузке файлов: {e}')
     
     def build_index(self):
-        for folder in os.listdir(self.path):
-            folder_path = os.path.join(self.path, folder)
-            if os.path.isdir(folder_path) and folder.startswith('images_'):
-                subfolder_path = os.path.join(folder_path, 'images')
-                if os.path.exists(subfolder_path):
-                    for image_name in os.listdir(subfolder_path):
-                        self.image_path_dict[image_name] = os.path.join(subfolder_path, image_name)
+        for root, dirs, files in os.walk(self.path):
+            if 'images' in root:
+                for file in files:
+                    if file.endswith(('.png', '.jpg', '.jpeg')):
+                        self.image_path_dict[file] = os.path.join(root, file)
+        self.df['File Path'] = self.df['Image Index'].map(self.image_path_dict)
+        self.df = self.df.dropna(subset=['File Path'])
     
     def process_labels(self):
-        for label in TARGET_LABELS:
-            self.df[label] = self.df[label].str.contains(label, regex=False).astype(int)
-        keep_columns = ['Image Index'] + TARGET_LABELS
+        for label in self.target_labels:
+            self.df[label] = self.df['Finding Labels'].str.contains(label, regex=False).astype(int)
+        
+        keep_columns = ['Image Index', 'Patient ID', 'File Path'] + self.target_labels
         self.df = self.df[keep_columns]
     
     def split_and_save(self):
-        train_df, val_df = train_test_split(
-            self.df, 
-            test_size=0.2, 
-            random_state=42,
-            shuffle=True
-        )
-        os.makedirs(self.data_dir, exist_ok=True)
+        gss = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+        train_idx, val_idx = next(gss.split(self.df, groups=self.df['Patient ID']))
+        
+        train_df = self.df.iloc[train_idx]
+        val_df = self.df.iloc[val_idx]
 
         train_df.to_csv(os.path.join(self.data_dir, 'train.csv'), index=False)
         val_df.to_csv(os.path.join(self.data_dir, 'val.csv'), index=False)
-        print(f"Готово. Обучающий датафрейм: {len(train_df)}, валидационный: {len(val_df)}")
         
+        print(f"Готово. Обучение: {len(train_df)} снимков, Валидация: {len(val_df)} снимков.")
+        pos_weights = []
+        for label in self.target_labels:
+            num_positives = train_df[label].sum()
+            num_negatives = len(train_df) - num_positives
+            weight = num_negatives / (num_positives + 1e-5)
+            pos_weights.append(weight)
+        
+        torch.save(torch.tensor(pos_weights, dtype=torch.float32), os.path.join(self.data_dir, 'pos_weights.pt'))
+        print("Веса для дисбаланса классов сохранены.")
 
     def run(self):
         self.download_and_load()
