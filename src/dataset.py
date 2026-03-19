@@ -2,6 +2,9 @@ from torch.utils.data import Dataset
 import pandas as pd
 from PIL import Image
 import random
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ChestXrayDataset(Dataset):
     def __init__(self, csv_file , transform=None):
@@ -18,11 +21,11 @@ class ChestXrayDataset(Dataset):
         try:
             image = Image.open(full_path).convert("RGB")
         except Exception as e:
-            print(f'Ошибка загрузки {full_path}: {e}')
+            logger.warning(f"Failed to load image at {full_path}: {e}. Loading random image instead.")
             new_index = random.randint(0, len(self.df) - 1)
             return self.__getitem__(new_index)
     
-        labels = row[2:].values.astype('float32')
+        labels = row[3:].values.astype('float32')
 
         
         if self.transform:

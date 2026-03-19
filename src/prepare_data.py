@@ -3,6 +3,7 @@ import pandas as pd
 import os
 from sklearn.model_selection import GroupShuffleSplit
 import torch
+
 TARGET_LABELS = [
     "Consolidation",
     "Effusion",
@@ -10,7 +11,8 @@ TARGET_LABELS = [
     "Atelectasis",
     "Infiltration"
 ]
-#TO-DO: исправить неравномернное распределение лейблов
+
+
 
 class DataPreprocessor:
     def __init__(self, target_labels):
@@ -23,7 +25,8 @@ class DataPreprocessor:
     def download_and_load(self):
         try:
             print('Начинаю загрузку датасета...')
-            self.path = kagglehub.dataset_download('nih-chest-xrays/data')  
+            self.path = kagglehub.dataset_download('nih-chest-xrays/data')
+            self.csv_path = os.path.join(self.path, 'Data_Entry_2017.csv')
             self.df = pd.read_csv(self.csv_path)
         except Exception as e:
             print(f'Ошибка при загрузке файлов: {e}')
