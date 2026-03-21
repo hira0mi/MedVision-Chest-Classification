@@ -8,6 +8,10 @@ from torch.utils.tensorboard import SummaryWriter
 import torchvision.transforms as transforms
 import numpy as np
 import matplotlib.pyplot as plt
+import random
+from pytorch_grad_cam import GradCAM
+from pytorch_grad_cam.utils.image import show_cam_on_image
+from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 
 from prepare_data import TARGET_LABELS
 from dataset import ChestXrayDataset
@@ -29,8 +33,8 @@ logger = logging.getLogger(__name__)
 
 NUM_CLASSES = len(TARGET_LABELS)
 BATCH_SIZE = 16
-EPOCHS = 40
-LR = 0.0001
+
+
 DATA_DIR = '../data'
 
 
@@ -132,15 +136,82 @@ class ChestXrayTrainer:
         plt.grid(True)
         plt.savefig(os.path.join(self.plots_dir, 'roc_auc_curve.png'))
         plt.close()
+    def _log_gradcam_sample(self, epoch):
+        self.model.eval()
+        
+        idx = random.randint(0, len(self.val_loader.dataset) - 1)
+        image, labels = self.val_loader.dataset[idx]
+        
 
+        input_tensor = image.unsqueeze(0).to(self.device)
 
-    def fit(self, epochs):
+        with torch.no_grad():
+            output = self.model(input_tensor)
+            probs = torch.sigmoid(output).squeeze().cpu().numpy()
+
+        predicted_indices = np.where(probs > self.metrics_calc.threshold)[0]
+        if len(predicted_indices) == 0:
+            predicted_indices = np.array([int(np.argmax(probs))])
+
+        predicted_labels = [TARGET_LABELS[i] for i in predicted_indices]
+        predicted_probs = [probs[i] for i in predicted_indices]
+
+        top_class_idx = int(predicted_indices[np.argmax(predicted_probs)])
+        top_class_name = TARGET_LABELS[top_class_idx]
+        top_class_prob = probs[top_class_idx]
+        actual_label = int(labels[top_class_idx])
+
+        mean = np.array([0.485, 0.456, 0.406])
+        std = np.array([0.229, 0.224, 0.225])
+        
+        rgb_img = image.permute(1, 2, 0).cpu().numpy()
+        rgb_img = std * rgb_img + mean
+        rgb_img = np.clip(rgb_img, 0, 1) 
+        
+
+        target_layers =[self.model.backbone.features[-1]]
+        targets = [ClassifierOutputTarget(top_class_idx)]
+        
+        with GradCAM(model=self.model, target_layers=target_layers) as cam:
+            grayscale_cam = cam(input_tensor=input_tensor, targets=targets)[0, :]
+            visualization = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
+
+        fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+        
+        axes[0].imshow(rgb_img)
+        axes[0].set_title("Оригинальный снимок")
+        axes[0].axis('off')
+        
+        axes[1].imshow(visualization)
+        predicted_text = ", ".join(
+            f"{label} ({prob:.2f})" for label, prob in zip(predicted_labels, predicted_probs)
+        )
+        title = f"CAM Внимание: {top_class_name}\nУверенность: {top_class_prob:.2f} | Факт: {actual_label}"
+        title = (
+            f"CAM attention: {top_class_name}\n"
+            f"Predicted labels: {predicted_text}\n"
+            f"Actual for CAM target: {actual_label}"
+        )
+        axes[1].set_title(title, color='green' if actual_label == 1 else 'red')
+        axes[1].axis('off')
+        plt.tight_layout()
+
+        save_path = os.path.join(self.plots_dir, f'gradcam_epoch_{epoch}.png')
+        plt.savefig(save_path)
+        
+
+        self.writer.add_figure('XAI/Validation_Sample', fig, epoch)
+        
+        plt.close(fig)
+
+    def fit(self, epochs, start_epoch=1, log_gradcam=True, close_writer=True):
         logger.info("=== Запуск обучения ===")
-        for epoch in range(1, epochs + 1):
+        end_epoch = start_epoch + epochs
+        for epoch in range(start_epoch, end_epoch):
         
             train_loss, train_metrics = self._train_epoch()
             val_loss, val_metrics = self._val_epoch()
-            logger.info(f"\n========== [ЭПОХА {epoch}/{epochs}] ==========")
+            logger.info(f"\n========== [ЭПОХА {epoch}/{end_epoch - 1}] ==========")
             logger.info(">>> Train метрики:")
             logger.info(self.metrics_calc.get_summary_string(train_loss, val_loss, train_metrics))
             logger.info(">>> Val метрики:")
@@ -158,13 +229,17 @@ class ChestXrayTrainer:
             self.writer.add_scalars('F1', {'Train': train_metrics['f1_macro'], 'Val': val_metrics['f1_macro']}, epoch)
             
             self._save_plots(epoch)
-            
+
+            if log_gradcam:
+                self._log_gradcam_sample(epoch)
+
             if val_metrics['roc_auc_macro'] > self.best_roc_auc:
                 self.best_roc_auc = val_metrics['roc_auc_macro']
                 torch.save(self.model.state_dict(), 'best_model.pth')
                 logger.info(f"\n+++ Улучшение! Сохранена лучшая модель (Val ROC-AUC: {self.best_roc_auc:.4f}) +++\n")
 
-        self.writer.close()
+        if close_writer:
+            self.writer.close()
         logger.info("=== Обучение завершено ===")
 
 if __name__ == '__main__':
@@ -181,7 +256,14 @@ if __name__ == '__main__':
         logger.warning("Веса классов не найдены, используется стандартный BCE Loss.")
 
     model = ChestXrayModel(num_classes=NUM_CLASSES).to(device)
-    optimizer = optim.Adam(model.parameters(), lr=LR)
+    for param in model.backbone.features.parameters():
+        param.requires_grad = False
+    optimizer = optim.Adam(
+        filter(lambda p: p.requires_grad, model.parameters()),
+        lr=1e-3,
+        weight_decay=1e-4
+    )
+    
 
     transform_train = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -217,5 +299,15 @@ if __name__ == '__main__':
         metrics_calc=metrics_calc,
         writer=writer
     )
+    trainer.fit(3, start_epoch=1, log_gradcam=False, close_writer=False)
+    for param in model.backbone.features.parameters():
+        param.requires_grad = True
+    optimizer = optim.Adam(
+        model.parameters(),
+        lr=1e-5,
+        weight_decay=1e-4
+    )
+    trainer.optimizer = optimizer
 
-    trainer.fit(EPOCHS)
+    trainer.fit(10, start_epoch=4, log_gradcam=True, close_writer=True)
+
