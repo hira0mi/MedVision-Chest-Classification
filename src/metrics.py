@@ -8,7 +8,10 @@ from sklearn.metrics import (
 class ChestXrayMetrics:
     def __init__(self, target_labels, threshold=0.5):
         self.target_labels = target_labels
-        self.threshold = threshold
+        if isinstance(threshold, list):
+            self.threshold = np.array(threshold)
+        else:
+            self.threshold = threshold
         
     def calculate_metrics(self, y_true, y_pred):
         y_pred_bin = (y_pred>self.threshold).astype(int)
@@ -50,7 +53,7 @@ class ChestXrayMetrics:
             f"--- MAIN | ROC-AUC: {metrics['roc_auc_macro']:.4f} | PR-AUC (mAP): {metrics['pr_auc_macro']:.4f}\n"
             f"--- CLINICAL | Sensitivity: {metrics['recall_sensitivity_macro']:.4f} | Specificity: {metrics['specificity_macro']:.4f}\n"
             f"--- OTHER | F1: {metrics['f1_macro']:.4f} | Hamming Loss: {metrics['hamming_loss']:.4f}\n"
-            f"--- ACCURACY | Exact: {metrics['exact_match_acc']:.4f} | Elem-wise: {metrics['element_wise_acc']:.4f}"
+            f"--- ACCURACY | Exact: {metrics['exact_match_acc']:.4f} | Elem-wise: {metrics['element_wise_acc']:.4f} | Macro Jaccard Score: {metrics['jaccard_score_macro']}"
         )
         return summary
 

@@ -1,0 +1,14 @@
+[2026-04-11 20:37:34] INFO: FINAL CLASSIFICATION REPORT
+[2026-04-11 20:37:34] INFO: ============================================================
+[2026-04-11 20:37:34] INFO:                precision    recall  f1-score   support
+
+Consolidation       0.16      0.37      0.23       951
+     Effusion       0.43      0.61      0.50      2553
+ Cardiomegaly       0.29      0.44      0.35       618
+  Atelectasis       0.31      0.45      0.37      2207
+ Infiltration       0.35      0.49      0.41      4097
+
+    micro avg       0.33      0.50      0.40     10426
+    macro avg       0.31      0.47      0.37     10426
+ weighted avg       0.34      0.50      0.40     10426
+  samples avg       0.13      0.17      0.14     10426

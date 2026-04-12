@@ -12,11 +12,14 @@ import random
 from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
+import torch.nn.functional as F
+import torchvision.transforms.functional as TF
 
 from prepare_data import TARGET_LABELS
 from dataset import ChestXrayDataset
 from model import ChestXrayModel
 from metrics import ChestXrayMetrics
+from lung_cropping import LungCropping
 
 
 os.makedirs('logs', exist_ok=True)
@@ -37,6 +40,38 @@ BATCH_SIZE = 16
 
 DATA_DIR = '../data'
 
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=1, gamma=2, logits=True, reduce=True, pos_weights=None):
+        super(FocalLoss, self).__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+        self.logits = logits
+        self.reduce = reduce
+        self.pos_weights = pos_weights
+
+    def forward(self, inputs, targets):
+        if self.logits:
+            BCE_loss = F.binary_cross_entropy_with_logits(inputs, targets, reduction='none', pos_weight=self.pos_weights)
+        else:
+            BCE_loss = F.binary_cross_entropy(inputs, targets, reduction='none')
+        pt = torch.exp(-BCE_loss)
+        F_loss = self.alpha * (1-pt)**self.gamma * BCE_loss
+
+        if self.reduce:
+            return torch.mean(F_loss)
+        else:
+            return F_loss
+
+
+class PadToSquare:
+    def __call__(self, image):
+        w, h = image.size
+        max_wh = max(w, h)
+        p_left = (max_wh - w) // 2
+        p_top = (max_wh - h) // 2
+        p_right = max_wh - w - p_left
+        p_bottom = max_wh - h - p_top
+        return TF.pad(image, (p_left, p_top, p_right, p_bottom), fill=0, padding_mode='constant')
 
 class ChestXrayTrainer:
     def __init__(self, model, train_loader, val_loader, criterion, optimizer, device, metrics_calc, writer):
@@ -48,6 +83,7 @@ class ChestXrayTrainer:
         self.device = device
         self.metrics_calc = metrics_calc
         self.writer = writer
+        self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=2)
 
         self.best_roc_auc = 0.0
         self.history = {
@@ -58,6 +94,7 @@ class ChestXrayTrainer:
         
         self.plots_dir = 'plots'
         os.makedirs(self.plots_dir, exist_ok=True)
+        self.scaler = torch.cuda.amp.GradScaler()
 
     def _train_epoch(self):
         self.model.train()
@@ -68,14 +105,16 @@ class ChestXrayTrainer:
             images, labels = images.to(self.device), labels.to(self.device)
             
             self.optimizer.zero_grad()
-            outputs = self.model(images)
-            loss = self.criterion(outputs, labels)
+            with torch.autocast(device_type='cuda', dtype=torch.float16):
+                outputs = self.model(images)
+                loss = self.criterion(outputs, labels)
 
-            loss.backward()
-            self.optimizer.step()
+            self.scaler.scale(loss).backward()
+            self.scaler.step(self.optimizer)
+            self.scaler.update()
 
             running_loss += loss.item()
-            probs = torch.sigmoid(outputs).detach()
+            probs = torch.sigmoid(outputs).detach().float() 
             all_preds.append(probs.cpu().numpy())
             all_labels.append(labels.cpu().numpy())
 
@@ -86,7 +125,11 @@ class ChestXrayTrainer:
         train_metrics = self.metrics_calc.calculate_metrics(all_labels, all_preds)
         
         return avg_loss, train_metrics
-    
+    def set_optimizer(self, new_optimizer):
+        self.optimizer = new_optimizer
+        self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+            self.optimizer, mode='max', factor=0.5, patience=2
+        )
     def _val_epoch(self):
         self.model.eval()
         all_preds, all_labels =[],[]
@@ -95,12 +138,13 @@ class ChestXrayTrainer:
         with torch.no_grad():
             for images, labels in self.val_loader:
                 images, labels = images.to(self.device), labels.to(self.device)
-                outputs = self.model(images)
-                
-                loss = self.criterion(outputs, labels)
+                with torch.autocast(device_type='cuda', dtype=torch.float16):
+                    outputs = self.model(images)
+                    loss = self.criterion(outputs, labels)
+
                 val_loss += loss.item()
 
-                probs = torch.sigmoid(outputs)
+                probs = torch.sigmoid(outputs).float()
                 all_preds.append(probs.cpu().numpy())
                 all_labels.append(labels.cpu().numpy())
 
@@ -126,6 +170,7 @@ class ChestXrayTrainer:
         plt.grid(True)
         plt.savefig(os.path.join(self.plots_dir, 'loss_curve.png'))
         plt.close()
+
         plt.figure(figsize=(10, 6))
         plt.plot(epochs_range, self.history['train_roc_auc'], label='Train ROC-AUC', color='lightblue', linestyle='--')
         plt.plot(epochs_range, self.history['val_roc_auc'], label='Val ROC-AUC', color='blue', marker='s')
@@ -136,6 +181,18 @@ class ChestXrayTrainer:
         plt.grid(True)
         plt.savefig(os.path.join(self.plots_dir, 'roc_auc_curve.png'))
         plt.close()
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(epochs_range, self.history['train_f1'], label='Train F1 score', color='lightblue', linestyle='--')
+        plt.plot(epochs_range, self.history['val_f1'], label='Val F1 score', color='blue', marker='s')
+        plt.title('Train vs Val F1 score')
+        plt.xlabel('Epochs')
+        plt.ylabel('Score')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(os.path.join(self.plots_dir, 'f1_score_curve.png'))
+        plt.close()
+
     def _log_gradcam_sample(self, epoch):
         self.model.eval()
         
@@ -179,14 +236,13 @@ class ChestXrayTrainer:
         fig, axes = plt.subplots(1, 2, figsize=(10, 5))
         
         axes[0].imshow(rgb_img)
-        axes[0].set_title("Оригинальный снимок")
+        axes[0].set_title("original")
         axes[0].axis('off')
         
         axes[1].imshow(visualization)
         predicted_text = ", ".join(
             f"{label} ({prob:.2f})" for label, prob in zip(predicted_labels, predicted_probs)
         )
-        title = f"CAM Внимание: {top_class_name}\nУверенность: {top_class_prob:.2f} | Факт: {actual_label}"
         title = (
             f"CAM attention: {top_class_name}\n"
             f"Predicted labels: {predicted_text}\n"
@@ -205,16 +261,16 @@ class ChestXrayTrainer:
         plt.close(fig)
 
     def fit(self, epochs, start_epoch=1, log_gradcam=True, close_writer=True):
-        logger.info("=== Запуск обучения ===")
+        logger.info("=== Training started ===")
         end_epoch = start_epoch + epochs
         for epoch in range(start_epoch, end_epoch):
         
             train_loss, train_metrics = self._train_epoch()
             val_loss, val_metrics = self._val_epoch()
-            logger.info(f"\n========== [ЭПОХА {epoch}/{end_epoch - 1}] ==========")
-            logger.info(">>> Train метрики:")
+            logger.info(f"\n========== [Epoch {epoch}/{end_epoch - 1}] ==========")
+            logger.info(">>> Train metrics:")
             logger.info(self.metrics_calc.get_summary_string(train_loss, val_loss, train_metrics))
-            logger.info(">>> Val метрики:")
+            logger.info(">>> Val metrics:")
             logger.info(self.metrics_calc.get_summary_string(train_loss, val_loss, val_metrics))
 
             self.history['train_loss'].append(train_loss)
@@ -236,50 +292,60 @@ class ChestXrayTrainer:
             if val_metrics['roc_auc_macro'] > self.best_roc_auc:
                 self.best_roc_auc = val_metrics['roc_auc_macro']
                 torch.save(self.model.state_dict(), 'best_model.pth')
-                logger.info(f"\n+++ Улучшение! Сохранена лучшая модель (Val ROC-AUC: {self.best_roc_auc:.4f}) +++\n")
+                logger.info(f"\n+++ New best model saved (Val ROC-AUC: {self.best_roc_auc:.4f}) +++\n")
+            self.scheduler.step(val_metrics['roc_auc_macro'])
+            current_lr = self.optimizer.param_groups[0]['lr']
+            logger.info(f"Current Learning Rate: {current_lr}")
 
         if close_writer:
             self.writer.close()
-        logger.info("=== Обучение завершено ===")
+        logger.info("=== Training completed ===")
 
 if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') 
-    logger.info(f"Используемое устройство: {device}")
+    logger.info(f"Using device: {device}")
     
     pos_weights_path = os.path.join(DATA_DIR, 'pos_weights.pt')
     if os.path.exists(pos_weights_path):
         pos_weights = torch.load(pos_weights_path).to(device)
-        criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weights)
-        logger.info("Загружены веса классов для BCEWithLogitsLoss.")
+        pos_weights = torch.clamp(pos_weights, max=10.0) 
+        criterion = FocalLoss(pos_weights=pos_weights, gamma=2.0)
+        logger.info("Using Focal Loss with pos_weights")
     else:
-        criterion = nn.BCEWithLogitsLoss()
-        logger.warning("Веса классов не найдены, используется стандартный BCE Loss.")
+        criterion = FocalLoss(gamma=2.0)
+        logger.warning("Weights not found, using default Focal Loss") 
 
     model = ChestXrayModel(num_classes=NUM_CLASSES).to(device)
+
+
     for param in model.backbone.features.parameters():
         param.requires_grad = False
-    optimizer = optim.Adam(
+
+    optimizer1 = optim.Adam(
         filter(lambda p: p.requires_grad, model.parameters()),
         lr=1e-3,
-        weight_decay=1e-4
+        weight_decay=1e-3
     )
     
 
     transform_train = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.RandomHorizontalFlip(),
+        LungCropping(margin_pct=0.04),
+        PadToSquare(),
+        transforms.Resize((512,512)),
         transforms.RandomRotation(10),
         transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406],[0.229, 0.224, 0.225])
+        transforms.Normalize([0.485, 0.456, 0.406],[0.229, 0.224, 0.225]),
     ])
     
     transform_val = transforms.Compose([
-        transforms.Resize((224, 224)),
+        LungCropping(margin_pct=0.04),
+        PadToSquare(),
+        transforms.Resize((512,512)),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406],[0.229, 0.224, 0.225])
     ])
 
-    logger.info("Создание датасетов и загрузчиков...")
+    logger.info("Creating datasets and dataloaders...")
     train_ds = ChestXrayDataset(os.path.join(DATA_DIR, 'train.csv'), transform=transform_train)
     val_ds = ChestXrayDataset(os.path.join(DATA_DIR, 'val.csv'), transform=transform_val)
 
@@ -294,7 +360,7 @@ if __name__ == '__main__':
         train_loader=train_loader, 
         val_loader=val_loader, 
         criterion=criterion, 
-        optimizer=optimizer, 
+        optimizer=optimizer1, 
         device=device,
         metrics_calc=metrics_calc,
         writer=writer
@@ -302,12 +368,14 @@ if __name__ == '__main__':
     trainer.fit(3, start_epoch=1, log_gradcam=False, close_writer=False)
     for param in model.backbone.features.parameters():
         param.requires_grad = True
-    optimizer = optim.Adam(
-        model.parameters(),
-        lr=1e-5,
-        weight_decay=1e-4
-    )
-    trainer.optimizer = optimizer
 
-    trainer.fit(10, start_epoch=4, log_gradcam=True, close_writer=True)
+    optimizer2 = optim.Adam([
+
+        {'params': model.backbone.features.parameters(), 'lr': 1e-6},
+        {'params': model.backbone.classifier.parameters(), 'lr': 1e-4}
+    ], weight_decay=1e-3)
+
+    trainer.set_optimizer(optimizer2) 
+
+    trainer.fit(7, start_epoch=4, log_gradcam=True, close_writer=True)
 

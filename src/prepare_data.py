@@ -3,6 +3,10 @@ import pandas as pd
 import os
 from sklearn.model_selection import GroupShuffleSplit
 import torch
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 TARGET_LABELS = [
     "Consolidation",
@@ -24,12 +28,12 @@ class DataPreprocessor:
     
     def download_and_load(self):
         try:
-            print('Начинаю загрузку датасета...')
+            print('Loading dataset...')
             self.path = kagglehub.dataset_download('nih-chest-xrays/data')
             self.csv_path = os.path.join(self.path, 'Data_Entry_2017.csv')
             self.df = pd.read_csv(self.csv_path)
         except Exception as e:
-            print(f'Ошибка при загрузке файлов: {e}')
+            logger.warning(f'Failed to load files: {e}')
     
     def build_index(self):
         for root, dirs, files in os.walk(self.path):
@@ -57,7 +61,7 @@ class DataPreprocessor:
         train_df.to_csv(os.path.join(self.data_dir, 'train.csv'), index=False)
         val_df.to_csv(os.path.join(self.data_dir, 'val.csv'), index=False)
         
-        print(f"Готово. Обучение: {len(train_df)} снимков, Валидация: {len(val_df)} снимков.")
+        logger.info(f"Done. Train: {len(train_df)} samples, Val: {len(val_df)} samples.")
         pos_weights = []
         for label in self.target_labels:
             num_positives = train_df[label].sum()
@@ -66,7 +70,7 @@ class DataPreprocessor:
             pos_weights.append(weight)
         
         torch.save(torch.tensor(pos_weights, dtype=torch.float32), os.path.join(self.data_dir, 'pos_weights.pt'))
-        print("Веса для дисбаланса классов сохранены.")
+        logger.info("Class weights have been saved.")
 
     def run(self):
         self.download_and_load()

@@ -1,0 +1,216 @@
+[2026-04-11 13:33:08] INFO: Using device: cuda
+[2026-04-11 13:33:08] INFO: Using Focal Loss with pos_weights
+[2026-04-11 13:33:09] INFO: Creating datasets and dataloaders...
+[2026-04-11 13:33:09] INFO: === Training started ===
+[2026-04-11 14:05:10] INFO: 
+========== [Epoch 1/3] ==========
+[2026-04-11 14:05:10] INFO: >>> Train metrics:
+[2026-04-11 14:05:10] INFO: 
+--- LOSS | Train: 0.5102 | Val: 0.5082
+--- MAIN | ROC-AUC: 0.7057 | PR-AUC (mAP): 0.1766
+--- CLINICAL | Sensitivity: 0.6902 | Specificity: 0.5217
+--- OTHER | F1: 0.2205 | Hamming Loss: 0.4315
+--- ACCURACY | Exact: 0.0883 | Elem-wise: 0.5685 | Macro Jaccard Score: 0.12628559726853145
+[2026-04-11 14:05:10] INFO: >>> Val metrics:
+[2026-04-11 14:05:10] INFO: 
+--- LOSS | Train: 0.5102 | Val: 0.5082
+--- MAIN | ROC-AUC: 0.7190 | PR-AUC (mAP): 0.1844
+--- CLINICAL | Sensitivity: 0.6777 | Specificity: 0.5563
+--- OTHER | F1: 0.2203 | Hamming Loss: 0.4038
+--- ACCURACY | Exact: 0.1378 | Elem-wise: 0.5962 | Macro Jaccard Score: 0.12744591808784392
+[2026-04-11 14:05:12] INFO: 
++++ New best model saved (Val ROC-AUC: 0.7190) +++
+
+[2026-04-11 14:05:12] INFO: Current Learning Rate: 0.001
+[2026-04-11 14:33:25] INFO: 
+========== [Epoch 2/3] ==========
+[2026-04-11 14:33:25] INFO: >>> Train metrics:
+[2026-04-11 14:33:25] INFO: 
+--- LOSS | Train: 0.5022 | Val: 0.5082
+--- MAIN | ROC-AUC: 0.7235 | PR-AUC (mAP): 0.1876
+--- CLINICAL | Sensitivity: 0.6991 | Specificity: 0.5317
+--- OTHER | F1: 0.2278 | Hamming Loss: 0.4223
+--- ACCURACY | Exact: 0.1004 | Elem-wise: 0.5777 | Macro Jaccard Score: 0.1307972383991471
+[2026-04-11 14:33:25] INFO: >>> Val metrics:
+[2026-04-11 14:33:25] INFO: 
+--- LOSS | Train: 0.5022 | Val: 0.5082
+--- MAIN | ROC-AUC: 0.7200 | PR-AUC (mAP): 0.1861
+--- CLINICAL | Sensitivity: 0.6877 | Specificity: 0.5514
+--- OTHER | F1: 0.2192 | Hamming Loss: 0.4065
+--- ACCURACY | Exact: 0.1230 | Elem-wise: 0.5935 | Macro Jaccard Score: 0.1267605768373134
+[2026-04-11 14:33:26] INFO: 
++++ New best model saved (Val ROC-AUC: 0.7200) +++
+
+[2026-04-11 14:33:26] INFO: Current Learning Rate: 0.001
+[2026-04-11 15:01:42] INFO: 
+========== [Epoch 3/3] ==========
+[2026-04-11 15:01:42] INFO: >>> Train metrics:
+[2026-04-11 15:01:42] INFO: 
+--- LOSS | Train: 0.5005 | Val: 0.5059
+--- MAIN | ROC-AUC: 0.7261 | PR-AUC (mAP): 0.1898
+--- CLINICAL | Sensitivity: 0.6995 | Specificity: 0.5343
+--- OTHER | F1: 0.2289 | Hamming Loss: 0.4201
+--- ACCURACY | Exact: 0.1007 | Elem-wise: 0.5799 | Macro Jaccard Score: 0.13156655994248034
+[2026-04-11 15:01:42] INFO: >>> Val metrics:
+[2026-04-11 15:01:42] INFO: 
+--- LOSS | Train: 0.5005 | Val: 0.5059
+--- MAIN | ROC-AUC: 0.7244 | PR-AUC (mAP): 0.1894
+--- CLINICAL | Sensitivity: 0.7044 | Specificity: 0.5385
+--- OTHER | F1: 0.2239 | Hamming Loss: 0.4183
+--- ACCURACY | Exact: 0.1190 | Elem-wise: 0.5817 | Macro Jaccard Score: 0.12911707548933615
+[2026-04-11 15:01:43] INFO: 
++++ New best model saved (Val ROC-AUC: 0.7244) +++
+
+[2026-04-11 15:01:43] INFO: Current Learning Rate: 0.001
+[2026-04-11 15:01:43] INFO: === Training completed ===
+[2026-04-11 15:01:43] INFO: === Training started ===
+[2026-04-11 15:48:31] INFO: 
+========== [Epoch 4/10] ==========
+[2026-04-11 15:48:31] INFO: >>> Train metrics:
+[2026-04-11 15:48:31] INFO: 
+--- LOSS | Train: 0.4802 | Val: 0.4789
+--- MAIN | ROC-AUC: 0.7521 | PR-AUC (mAP): 0.2231
+--- CLINICAL | Sensitivity: 0.7155 | Specificity: 0.5809
+--- OTHER | F1: 0.2504 | Hamming Loss: 0.3815
+--- ACCURACY | Exact: 0.1478 | Elem-wise: 0.6185 | Macro Jaccard Score: 0.14561082592166757
+[2026-04-11 15:48:31] INFO: >>> Val metrics:
+[2026-04-11 15:48:31] INFO: 
+--- LOSS | Train: 0.4802 | Val: 0.4789
+--- MAIN | ROC-AUC: 0.7628 | PR-AUC (mAP): 0.2368
+--- CLINICAL | Sensitivity: 0.7225 | Specificity: 0.6330
+--- OTHER | F1: 0.2685 | Hamming Loss: 0.3415
+--- ACCURACY | Exact: 0.2304 | Elem-wise: 0.6585 | Macro Jaccard Score: 0.15794960951805725
+[2026-04-11 15:48:33] INFO: 
++++ New best model saved (Val ROC-AUC: 0.7628) +++
+
+[2026-04-11 15:48:33] INFO: Current Learning Rate: 1e-06
+[2026-04-11 16:36:31] INFO: 
+========== [Epoch 5/10] ==========
+[2026-04-11 16:36:31] INFO: >>> Train metrics:
+[2026-04-11 16:36:31] INFO: 
+--- LOSS | Train: 0.4635 | Val: 0.4670
+--- MAIN | ROC-AUC: 0.7751 | PR-AUC (mAP): 0.2514
+--- CLINICAL | Sensitivity: 0.7521 | Specificity: 0.5973
+--- OTHER | F1: 0.2670 | Hamming Loss: 0.3666
+--- ACCURACY | Exact: 0.1586 | Elem-wise: 0.6334 | Macro Jaccard Score: 0.15667051193687598
+[2026-04-11 16:36:31] INFO: >>> Val metrics:
+[2026-04-11 16:36:31] INFO: 
+--- LOSS | Train: 0.4635 | Val: 0.4670
+--- MAIN | ROC-AUC: 0.7800 | PR-AUC (mAP): 0.2577
+--- CLINICAL | Sensitivity: 0.7442 | Specificity: 0.6353
+--- OTHER | F1: 0.2797 | Hamming Loss: 0.3375
+--- ACCURACY | Exact: 0.2188 | Elem-wise: 0.6625 | Macro Jaccard Score: 0.1650122294024769
+[2026-04-11 16:36:33] INFO: 
++++ New best model saved (Val ROC-AUC: 0.7800) +++
+
+[2026-04-11 16:36:33] INFO: Current Learning Rate: 1e-06
+[2026-04-11 17:26:18] INFO: 
+========== [Epoch 6/10] ==========
+[2026-04-11 17:26:18] INFO: >>> Train metrics:
+[2026-04-11 17:26:18] INFO: 
+--- LOSS | Train: 0.4552 | Val: 0.4575
+--- MAIN | ROC-AUC: 0.7852 | PR-AUC (mAP): 0.2652
+--- CLINICAL | Sensitivity: 0.7677 | Specificity: 0.6024
+--- OTHER | F1: 0.2727 | Hamming Loss: 0.3619
+--- ACCURACY | Exact: 0.1594 | Elem-wise: 0.6381 | Macro Jaccard Score: 0.16049430956528804
+[2026-04-11 17:26:18] INFO: >>> Val metrics:
+[2026-04-11 17:26:18] INFO: 
+--- LOSS | Train: 0.4552 | Val: 0.4575
+--- MAIN | ROC-AUC: 0.7909 | PR-AUC (mAP): 0.2750
+--- CLINICAL | Sensitivity: 0.7659 | Specificity: 0.6298
+--- OTHER | F1: 0.2872 | Hamming Loss: 0.3403
+--- ACCURACY | Exact: 0.2023 | Elem-wise: 0.6597 | Macro Jaccard Score: 0.16982721333157738
+[2026-04-11 17:26:20] INFO: 
++++ New best model saved (Val ROC-AUC: 0.7909) +++
+
+[2026-04-11 17:26:20] INFO: Current Learning Rate: 1e-06
+[2026-04-11 18:14:42] INFO: 
+========== [Epoch 7/10] ==========
+[2026-04-11 18:14:42] INFO: >>> Train metrics:
+[2026-04-11 18:14:42] INFO: 
+--- LOSS | Train: 0.4475 | Val: 0.4508
+--- MAIN | ROC-AUC: 0.7949 | PR-AUC (mAP): 0.2819
+--- CLINICAL | Sensitivity: 0.7829 | Specificity: 0.6106
+--- OTHER | F1: 0.2804 | Hamming Loss: 0.3545
+--- ACCURACY | Exact: 0.1702 | Elem-wise: 0.6455 | Macro Jaccard Score: 0.16575657863219367
+[2026-04-11 18:14:42] INFO: >>> Val metrics:
+[2026-04-11 18:14:42] INFO: 
+--- LOSS | Train: 0.4475 | Val: 0.4508
+--- MAIN | ROC-AUC: 0.7974 | PR-AUC (mAP): 0.2868
+--- CLINICAL | Sensitivity: 0.8002 | Specificity: 0.6093
+--- OTHER | F1: 0.2854 | Hamming Loss: 0.3559
+--- ACCURACY | Exact: 0.1667 | Elem-wise: 0.6441 | Macro Jaccard Score: 0.16861035143933797
+[2026-04-11 18:14:44] INFO: 
++++ New best model saved (Val ROC-AUC: 0.7974) +++
+
+[2026-04-11 18:14:44] INFO: Current Learning Rate: 1e-06
+[2026-04-11 19:05:02] INFO: 
+========== [Epoch 8/10] ==========
+[2026-04-11 19:05:02] INFO: >>> Train metrics:
+[2026-04-11 19:05:02] INFO: 
+--- LOSS | Train: 0.4419 | Val: 0.4469
+--- MAIN | ROC-AUC: 0.8006 | PR-AUC (mAP): 0.2928
+--- CLINICAL | Sensitivity: 0.7928 | Specificity: 0.6147
+--- OTHER | F1: 0.2851 | Hamming Loss: 0.3507
+--- ACCURACY | Exact: 0.1735 | Elem-wise: 0.6493 | Macro Jaccard Score: 0.16896886506941852
+[2026-04-11 19:05:02] INFO: >>> Val metrics:
+[2026-04-11 19:05:02] INFO: 
+--- LOSS | Train: 0.4419 | Val: 0.4469
+--- MAIN | ROC-AUC: 0.8019 | PR-AUC (mAP): 0.2932
+--- CLINICAL | Sensitivity: 0.7988 | Specificity: 0.6240
+--- OTHER | F1: 0.2917 | Hamming Loss: 0.3442
+--- ACCURACY | Exact: 0.1918 | Elem-wise: 0.6558 | Macro Jaccard Score: 0.1728316014248683
+[2026-04-11 19:05:05] INFO: 
++++ New best model saved (Val ROC-AUC: 0.8019) +++
+
+[2026-04-11 19:05:05] INFO: Current Learning Rate: 1e-06
+[2026-04-11 19:57:43] INFO: 
+========== [Epoch 9/10] ==========
+[2026-04-11 19:57:43] INFO: >>> Train metrics:
+[2026-04-11 19:57:43] INFO: 
+--- LOSS | Train: 0.4374 | Val: 0.4455
+--- MAIN | ROC-AUC: 0.8060 | PR-AUC (mAP): 0.2998
+--- CLINICAL | Sensitivity: 0.7990 | Specificity: 0.6203
+--- OTHER | F1: 0.2897 | Hamming Loss: 0.3457
+--- ACCURACY | Exact: 0.1796 | Elem-wise: 0.6543 | Macro Jaccard Score: 0.17213435218654527
+[2026-04-11 19:57:43] INFO: >>> Val metrics:
+[2026-04-11 19:57:43] INFO: 
+--- LOSS | Train: 0.4374 | Val: 0.4455
+--- MAIN | ROC-AUC: 0.8071 | PR-AUC (mAP): 0.3027
+--- CLINICAL | Sensitivity: 0.8441 | Specificity: 0.5720
+--- OTHER | F1: 0.2794 | Hamming Loss: 0.3861
+--- ACCURACY | Exact: 0.1378 | Elem-wise: 0.6139 | Macro Jaccard Score: 0.16422348644736065
+[2026-04-11 19:57:44] INFO: 
++++ New best model saved (Val ROC-AUC: 0.8071) +++
+
+[2026-04-11 19:57:44] INFO: Current Learning Rate: 1e-06
+[2026-04-11 20:30:37] INFO: Loading weights from best_model.pth...
+[2026-04-11 20:30:37] INFO: Generating predictions to compute thresholds...
+[2026-04-11 20:37:34] INFO: 
+ --- COMPUTING OPTIMAL THRESHOLDS ---
+[2026-04-11 20:37:34] INFO: Consolidation: Optimal threshold =  0.6533 (Expected F1 = 0.2262)
+[2026-04-11 20:37:34] INFO: Effusion: Optimal threshold =  0.7808 (Expected F1 = 0.5035)
+[2026-04-11 20:37:34] INFO: Cardiomegaly: Optimal threshold =  0.6636 (Expected F1 = 0.3507)
+[2026-04-11 20:37:34] INFO: Atelectasis: Optimal threshold =  0.7480 (Expected F1 = 0.3679)
+[2026-04-11 20:37:34] INFO: Infiltration: Optimal threshold =  0.6592 (Expected F1 = 0.4067)
+[2026-04-11 20:37:34] INFO: 
+Model with embedded thresholds saved as: best_model_with_thresholds.pth
+[2026-04-11 20:37:34] INFO: 
+============================================================
+[2026-04-11 20:37:34] INFO: FINAL CLASSIFICATION REPORT
+[2026-04-11 20:37:34] INFO: ============================================================
+[2026-04-11 20:37:34] INFO:                precision    recall  f1-score   support
+
+Consolidation       0.16      0.37      0.23       951
+     Effusion       0.43      0.61      0.50      2553
+ Cardiomegaly       0.29      0.44      0.35       618
+  Atelectasis       0.31      0.45      0.37      2207
+ Infiltration       0.35      0.49      0.41      4097
+
+    micro avg       0.33      0.50      0.40     10426
+    macro avg       0.31      0.47      0.37     10426
+ weighted avg       0.34      0.50      0.40     10426
+  samples avg       0.13      0.17      0.14     10426
+
+[2026-04-11 20:44:55] INFO: Using device: cuda
+[2026-04-11 20:44:55] INFO: Using Focal Loss with pos_weights
