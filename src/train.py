@@ -85,7 +85,7 @@ class ChestXrayTrainer:
         self.writer = writer
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, mode='max', factor=0.5, patience=2)
 
-        self.best_roc_auc = 0.0
+        self.best_pr_auc = 0.0
         self.history = {
             'train_loss': [], 'val_loss': [],
             'train_roc_auc':[], 'val_roc_auc': [],
@@ -289,11 +289,11 @@ class ChestXrayTrainer:
             if log_gradcam:
                 self._log_gradcam_sample(epoch)
 
-            if val_metrics['roc_auc_macro'] > self.best_roc_auc:
-                self.best_roc_auc = val_metrics['roc_auc_macro']
+            if val_metrics['pr_auc_macro'] > self.best_pr_auc:
+                self.best_pr_auc = val_metrics['pr_auc_macro']
                 torch.save(self.model.state_dict(), 'best_model.pth')
-                logger.info(f"\n+++ New best model saved (Val ROC-AUC: {self.best_roc_auc:.4f}) +++\n")
-            self.scheduler.step(val_metrics['roc_auc_macro'])
+                logger.info(f"\n+++ New best model saved (Val pr-auc: {self.best_pr_auc:.4f}) +++\n")
+            self.scheduler.step(val_metrics['pr_auc_macro'])
             current_lr = self.optimizer.param_groups[0]['lr']
             logger.info(f"Current Learning Rate: {current_lr}")
 
