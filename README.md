@@ -4,7 +4,7 @@
 ![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white) 
 ![OpenCV](https://img.shields.io/badge/opencv-%23white.svg?style=for-the-badge&logo=opencv&logoColor=white) 
 ![Scikit-Learn](https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white)
-[![CodeFactor](https://www.codefactor.io/repository/github/hira0mi/medvision-chest-classification/badge)]
+[![CodeFactor](https://www.codefactor.io/repository/github/hira0mi/medvision-chest-classification/badge)](https://www.codefactor.io/repository/github/hira0mi/medvision-chest-classification)
 
 This repository contains a robust Deep Learning pipeline for the multi-label classification of chest X-ray images. The model is engineered to detect 5 core thoracic pathologies from the NIH Chest X-ray dataset: **Consolidation, Effusion, Cardiomegaly, Atelectasis, and Infiltration**.
 
