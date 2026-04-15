@@ -88,7 +88,17 @@ Crucially, XAI also helps identify data biases. In the example below, the model 
 ## 📁 Project Structure
 
 ```text
+.
+├── LICENSE
+├── README.md
+├── requirements.txt
+├── .gitignore
 ├── src/
+│   ├── logs/
+│   ├── plots/
+│   ├── runs/
+│   │   └── chest_xray_experiment/
+│   ├── showcase_images/    # Grad-CAM visualization examples
 │   ├── model.py            # ConvNeXt architecture & threshold buffering
 │   ├── train.py            # Training loop, Focal Loss, AMP, TensorBoard logging
 │   ├── evaluate.py         # PR-curve threshold optimization
@@ -97,8 +107,7 @@ Crucially, XAI also helps identify data biases. In the example below, the model 
 │   ├── lung_cropping.py    # OpenCV automated lung bounding-box cropping
 │   ├── metrics.py          # Comprehensive multi-label metrics calculation
 │   └── generate_cams.py    # XAI script for extracting & visualizing attention maps
-├── showcase_images/        # Grad-CAM visualization examples
-└── README.me
+
 ```
 
 ## 🚀 Quick Start
