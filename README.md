@@ -16,7 +16,7 @@ Beyond standard model training, this project emphasizes **medical data integrity
 
 While landmark papers in this domain (e.g., **CheXNet**, Rajpurkar et al., 2017) evaluate on 14 different pathologies using massive model ensembles, this project focuses on a core subset of 5 findings using a single lightweight architecture. 
 
-Direct comparison across different label spaces is inherently nuanced. However, comparing the F1-scores on these specific pathologies demonstrates that our model achieves **near-expert level feature extraction capabilities**, lagging behind SOTA baselines by only `~0.02` in Macro F1-score.
+Direct comparison across different label spaces is inherently nuanced. However, comparing the F1-scores on these specific pathologies demonstrates that our model achieves **near-expert level feature extraction capabilities**, lagging behind SOTA baselines by only `~0.03` in Macro F1-score.
 
 | Pathology (Class) | Our F1-Score | SOTA / CheXNet Benchmark (Approx.)* |
 | :--- | :---: | :---: |
